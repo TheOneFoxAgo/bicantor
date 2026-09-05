@@ -14,37 +14,37 @@ use crate::{
 fn main() {
     let args: Args = Args::from_env();
     let ctx = Ctx {
-        pair: if args.square {
-            pair::square::dencoder()
+        pair: if args.diagonal {
+            &pair::DiagonalPairDencoder
         } else {
-            pair::diagonal::dencoder()
+            &pair::SquarePairDencoder
         },
-        list: if args.treelike {
-            list::treelike::dencoder()
+        list: if args.linear {
+            &list::LinearListDencoder
         } else {
-            list::linear::dencoder()
+            &list::TreelikeListDencoder
         },
-        tree: tree::dencoder(),
+        tree: &tree::RecursiveTreeDencoder,
     };
     match args.action {
         Action::Encode(encode) => match encode.data_type {
             encode::DataType::Pair(pair) => {
-                println!("{}", (ctx.pair.encode)(&ctx, pair.first, pair.second))
+                println!("{}", ctx.pair.encode(&ctx, pair.first, pair.second))
             }
             encode::DataType::List(list) => {
-                println!("{}", (ctx.list.encode)(&ctx, &mut list.numbers.into_iter()))
+                println!("{}", ctx.list.encode(&ctx, &mut list.numbers.into_iter()))
             }
             encode::DataType::Tree(tree) => {
-                println!("{}", (ctx.tree.encode)(&ctx, tree.tree.as_slice()))
+                println!("{}", ctx.tree.encode(&ctx, tree.tree.as_slice()))
             }
         },
         Action::Decode(decode) => match decode.data_type {
             decode::DataType::Pair(pair) => {
-                let (x, y) = (ctx.pair.decode)(&ctx, pair.number);
+                let (x, y) = ctx.pair.decode(&ctx, pair.number);
                 println!("{} {}", x, y)
             }
             decode::DataType::List(list) => {
-                let mut iter = (ctx.list.decode)(&ctx, list.number);
+                let mut iter = ctx.list.decode(&ctx, list.number);
                 if let Some(number) = iter.next() {
                     print!("{number}");
                     for number in iter {
@@ -54,7 +54,7 @@ fn main() {
                 println!()
             }
             decode::DataType::Tree(tree) => {
-                println!("{}", (ctx.tree.decode)(&ctx, tree.number))
+                println!("{}", ctx.tree.decode(&ctx, tree.number))
             }
         },
     }

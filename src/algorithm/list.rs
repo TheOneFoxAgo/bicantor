@@ -1,45 +1,78 @@
-pub mod linear;
-pub mod treelike;
+use crate::ctx::{Ctx, ListDencoder};
+use num_bigint::BigUint;
+use std::collections::VecDeque;
 
-#[cfg(test)]
-mod list_tests {
-    use crate::ctx::Ctx;
-    use num_bigint::BigUint;
+pub struct LinearListDencoder;
 
-    pub fn decode_empty(ctx: &Ctx) {
-        assert_eq!((ctx.list.decode)(ctx, BigUint::ZERO).next(), None)
+impl ListDencoder for LinearListDencoder {
+    fn encode(&self, ctx: &Ctx<'_>, iter: &mut dyn Iterator<Item = BigUint>) -> BigUint {
+        let Some(acc) = iter.next() else {
+            return BigUint::ZERO;
+        };
+        let (len, code) = iter.fold((0, acc), |(i, acc), n| {
+            (i + 1, ctx.pair.encode(ctx, n, acc))
+        });
+        ctx.pair.encode(ctx, BigUint::new_const(len), code) + BigUint::ONE
     }
 
-    pub fn encode_empty(ctx: &Ctx) {
-        assert_eq!(
-            (ctx.list.encode)(ctx, &mut std::iter::empty()),
-            BigUint::ZERO
-        )
-    }
-
-    pub fn decode_encode(ctx: &Ctx) {
-        for number in [1, 0, 2341234, 3257893, 1234, 8] {
-            let number = BigUint::new_const(number);
-            let new_number = (ctx.list.encode)(ctx, &mut (ctx.list.decode)(ctx, number.clone()));
-            assert_eq!(number, new_number);
+    fn decode(&self, ctx: &Ctx<'_>, mut code: BigUint) -> Box<dyn Iterator<Item = BigUint>> {
+        let mut numbers = vec![];
+        if code != BigUint::ZERO {
+            code -= BigUint::ONE;
+            let len;
+            (len, code) = ctx.pair.decode(ctx, code);
+            for _ in 0..len.try_into().unwrap_or(usize::MAX) {
+                let n;
+                (n, code) = ctx.pair.decode(ctx, code);
+                numbers.push(n);
+            }
+            numbers.push(code);
+            numbers.reverse();
         }
+        Box::new(numbers.into_iter())
+    }
+}
+
+pub struct TreelikeListDencoder;
+
+impl ListDencoder for TreelikeListDencoder {
+    fn encode(&self, ctx: &Ctx<'_>, iter: &mut dyn Iterator<Item = BigUint>) -> BigUint {
+        let mut numbers: VecDeque<_> = iter.collect();
+        if numbers.is_empty() {
+            return BigUint::ZERO;
+        }
+        let len = numbers.len() as u32 - 1;
+        while numbers.len() > 1 {
+            let (Some(y), Some(x)) = (numbers.pop_back(), numbers.pop_back()) else {
+                unreachable!()
+            };
+            let head = ctx.pair.encode(ctx, x, y);
+            numbers.push_front(head);
+        }
+        let Some(code) = numbers.pop_back() else {
+            unreachable!()
+        };
+
+        ctx.pair.encode(ctx, BigUint::new_const(len), code) + BigUint::ONE
     }
 
-    pub fn decode_encode_sanity(ctx: &Ctx) {
-        let x = (ctx.list.encode)(ctx, &mut (ctx.list.decode)(ctx, BigUint::ZERO));
-        let y = (ctx.list.encode)(ctx, &mut (ctx.list.decode)(ctx, BigUint::ONE));
-        assert_ne!(x, y);
-    }
-
-    pub fn encode_decode_long(ctx: &Ctx) {
-        let seq: Vec<BigUint> = [
-            12, 234, 523, 1, 3, 0, 0, 1598, 889231, 213, 2134, 9324, 123, 656, 0, 0,
-        ]
-        .into_iter()
-        .map(BigUint::new_const)
-        .collect();
-        let code = (ctx.list.encode)(ctx, &mut seq.iter().cloned());
-        let decoded: Vec<BigUint> = (ctx.list.decode)(ctx, code).collect();
-        assert_eq!(seq, decoded);
+    fn decode(&self, ctx: &Ctx<'_>, mut code: BigUint) -> Box<dyn Iterator<Item = BigUint>> {
+        let mut numbers = VecDeque::new();
+        if code != BigUint::ZERO {
+            code -= BigUint::ONE;
+            let len;
+            (len, code) = ctx.pair.decode(ctx, code);
+            let len = len.try_into().unwrap_or(usize::MAX).saturating_add(1);
+            numbers.push_back(code);
+            while numbers.len() < len {
+                let Some(head) = numbers.pop_front() else {
+                    unreachable!()
+                };
+                let (x, y) = ctx.pair.decode(ctx, head);
+                numbers.push_back(x);
+                numbers.push_back(y);
+            }
+        }
+        Box::new(numbers.into_iter())
     }
 }
