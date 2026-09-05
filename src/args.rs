@@ -7,6 +7,20 @@ use argh::FromArgs;
 #[derive(FromArgs)]
 #[argh(help_triggers("-h", "--help", "help"))]
 pub struct Args {
+    /// enable diagonal pair encoding (on by default)
+    #[argh(switch, short = 'd')]
+    #[allow(unused)]
+    pub diagonal: bool,
+    /// enable square pair encoding (off by default)
+    #[argh(switch, short = 's')]
+    pub square: bool,
+    /// enable linear list encoding (on by default)
+    #[argh(switch, short = 'l')]
+    #[allow(unused)]
+    pub linear: bool,
+    /// enable treelike list encoding (off by default)
+    #[argh(switch, short = 't')]
+    pub treelike: bool,
     #[argh(subcommand)]
     pub action: Action,
 }
