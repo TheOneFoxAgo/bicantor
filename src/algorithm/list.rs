@@ -3,7 +3,6 @@ use num_bigint::BigUint;
 use std::collections::VecDeque;
 
 pub struct LinearListDencoder;
-
 impl ListDencoder for LinearListDencoder {
     fn encode(&self, ctx: &Ctx<'_>, iter: &mut dyn Iterator<Item = BigUint>) -> BigUint {
         let Some(acc) = iter.next() else {
@@ -34,7 +33,6 @@ impl ListDencoder for LinearListDencoder {
 }
 
 pub struct TreelikeListDencoder;
-
 impl ListDencoder for TreelikeListDencoder {
     fn encode(&self, ctx: &Ctx<'_>, iter: &mut dyn Iterator<Item = BigUint>) -> BigUint {
         let mut numbers: VecDeque<_> = iter.collect();
