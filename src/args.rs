@@ -8,16 +8,16 @@ use argh::FromArgs;
 #[argh(help_triggers("-h", "--help", "help"))]
 #[allow(unused)]
 pub struct Args {
-    /// enable diagonal pair encoding (on by default)
+    /// enable diagonal pair encoding (off by default)
     #[argh(switch, short = 'd')]
     pub diagonal: bool,
-    /// enable square pair encoding (off by default)
+    /// enable square pair encoding (on by default)
     #[argh(switch, short = 's')]
     pub square: bool,
-    /// enable linear list encoding (on by default)
+    /// enable linear list encoding (off by default)
     #[argh(switch, short = 'l')]
     pub linear: bool,
-    /// enable treelike list encoding (off by default)
+    /// enable treelike list encoding (on by default)
     #[argh(switch, short = 't')]
     pub treelike: bool,
     #[argh(subcommand)]
