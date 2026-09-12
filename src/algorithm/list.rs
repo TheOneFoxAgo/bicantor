@@ -74,31 +74,3 @@ impl ListDencoder for TreelikeDencoder {
         Box::new(numbers.into_iter())
     }
 }
-
-pub struct ZeroTermDencoder;
-impl ListDencoder for ZeroTermDencoder {
-    fn encode(&self, ctx: &Ctx<'_>, iter: &mut dyn Iterator<Item = BigUint>) -> BigUint {
-        let Some(mut acc) = iter.next() else {
-            return BigUint::ZERO;
-        };
-        acc = ctx.pair.encode(ctx, acc, BigUint::ZERO);
-        iter.fold(acc, |acc, n| ctx.pair.encode(ctx, n, acc)) + BigUint::ONE
-    }
-
-    fn decode(&self, ctx: &Ctx<'_>, mut code: BigUint) -> Box<dyn Iterator<Item = BigUint>> {
-        let mut numbers = vec![];
-        if code != BigUint::ZERO {
-            code -= BigUint::ONE;
-            loop {
-                let n;
-                (n, code) = ctx.pair.decode(ctx, code);
-                numbers.push(n);
-                if code == BigUint::ZERO {
-                    break;
-                }
-            }
-            numbers.reverse();
-        }
-        Box::new(numbers.into_iter())
-    }
-}

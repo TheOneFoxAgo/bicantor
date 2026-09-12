@@ -10,7 +10,7 @@ mod tests {
 
     use crate::{
         algorithm::{
-            list::{LinearDencoder, TreelikeDencoder, ZeroTermDencoder},
+            list::{LinearDencoder, TreelikeDencoder},
             pair::{DiagonalDencoder, SquareDencoder},
             tree::{DepthDencoder, WidthDencoder},
         },
@@ -47,7 +47,6 @@ mod tests {
     fn list_dencoders(
         #[values(
             &LinearDencoder,
-            &ZeroTermDencoder,
             &TreelikeDencoder,
         )]
         list_dencoder: &dyn ListDencoder,
@@ -135,6 +134,21 @@ mod tests {
         let code = ctx.list.encode(&ctx, &mut seq.iter().cloned());
         let decoded: Vec<BigUint> = ctx.list.decode(&ctx, code).collect();
         assert_eq!(seq, decoded);
+    }
+
+    #[apply(list_dencoders)]
+    fn list_encode_decode_zeros(list_dencoder: &dyn ListDencoder) {
+        let ctx = ctx!(list: list_dencoder);
+        for seq in [
+            [BigUint::ZERO; 1].as_slice(),
+            [BigUint::ZERO; 2].as_slice(),
+            [BigUint::ZERO; 3].as_slice(),
+            [BigUint::ZERO; 4].as_slice(),
+        ] {
+            let code = ctx.list.encode(&ctx, &mut seq.iter().cloned());
+            let decoded: Vec<BigUint> = ctx.list.decode(&ctx, code).collect();
+            assert_eq!(seq, decoded);
+        }
     }
 
     #[apply(tree_dencoders)]

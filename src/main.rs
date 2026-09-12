@@ -21,7 +21,6 @@ fn main() {
         list: match args.list {
             args::ListMode::Linear => &list::LinearDencoder,
             args::ListMode::Treelike => &list::TreelikeDencoder,
-            args::ListMode::Zeroterm => &list::ZeroTermDencoder,
         },
         tree: match args.tree {
             args::TreeMode::Depth => &tree::DepthDencoder,
