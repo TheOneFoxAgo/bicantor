@@ -17,7 +17,7 @@ pub struct Args {
     /// list encoder operation mode.
     /// Possible values are: "linear", "treelike", "oddeven".
     /// Default is "oddeven"
-    #[argh(option, short = 'l', default = "ListMode::Treelike")]
+    #[argh(option, short = 'l', default = "ListMode::Oddeven")]
     pub list: ListMode,
 
     /// tree encoder operation mode.
