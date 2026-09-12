@@ -14,17 +14,19 @@ use crate::{
 fn main() {
     let args: Args = Args::from_env();
     let ctx = Ctx {
-        pair: if args.diagonal {
-            &pair::DiagonalPairDencoder
-        } else {
-            &pair::SquarePairDencoder
+        pair: match args.pair {
+            args::PairMode::Cantor => &pair::DiagonalDencoder,
+            args::PairMode::Square => &pair::SquareDencoder,
         },
-        list: if args.linear {
-            &list::LinearListDencoder
-        } else {
-            &list::TreelikeListDencoder
+        list: match args.list {
+            args::ListMode::Linear => &list::LinearDencoder,
+            args::ListMode::Treelike => &list::TreelikeDencoder,
+            args::ListMode::Zeroterm => &list::ZeroTermDencoder,
         },
-        tree: &tree::RecursiveTreeDencoder,
+        tree: match args.tree {
+            args::TreeMode::Depth => &tree::DepthDencoder,
+            args::TreeMode::Width => &tree::WidthDencoder,
+        },
     };
     match args.action {
         Action::Encode(encode) => match encode.data_type {

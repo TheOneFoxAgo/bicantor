@@ -1,27 +1,52 @@
 pub mod decode;
 pub mod encode;
 
-use argh::FromArgs;
+use argh::{FromArgValue, FromArgs};
 
 /// The ultimate tool for encoding/decoding natural numbers
 #[derive(FromArgs)]
 #[argh(help_triggers("-h", "--help", "help"))]
 #[allow(unused)]
 pub struct Args {
-    /// enable diagonal pair encoding (off by default)
-    #[argh(switch, short = 'd')]
-    pub diagonal: bool,
-    /// enable square pair encoding (on by default)
-    #[argh(switch, short = 's')]
-    pub square: bool,
-    /// enable linear list encoding (off by default)
-    #[argh(switch, short = 'l')]
-    pub linear: bool,
-    /// enable treelike list encoding (on by default)
-    #[argh(switch, short = 't')]
-    pub treelike: bool,
+    /// pair encoder operation mode.
+    /// Possible values are: "cantor", "square".
+    /// Default is "square"
+    #[argh(option, short = 'p', default = "PairMode::Square")]
+    pub pair: PairMode,
+
+    /// list encoder operation mode.
+    /// Possible values are: "linear", "treelike", "zeroterm".
+    /// Default is "zeroterm"
+    #[argh(option, short = 'l', default = "ListMode::Zeroterm")]
+    pub list: ListMode,
+
+    /// tree encoder operation mode.
+    /// Possible values are: "width", "depth".
+    /// Default is "depth"
+    #[argh(option, short = 't', default = "TreeMode::Depth")]
+    pub tree: TreeMode,
+
     #[argh(subcommand)]
     pub action: Action,
+}
+
+#[derive(FromArgValue)]
+pub enum PairMode {
+    Cantor,
+    Square,
+}
+
+#[derive(FromArgValue)]
+pub enum ListMode {
+    Linear,
+    Treelike,
+    Zeroterm,
+}
+
+#[derive(FromArgValue)]
+pub enum TreeMode {
+    Depth,
+    Width,
 }
 
 #[derive(FromArgs, PartialEq)]

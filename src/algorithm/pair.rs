@@ -1,8 +1,8 @@
 use crate::ctx::{Ctx, PairDencoder};
 use num_bigint::BigUint;
 
-pub struct DiagonalPairDencoder;
-impl PairDencoder for DiagonalPairDencoder {
+pub struct DiagonalDencoder;
+impl PairDencoder for DiagonalDencoder {
     fn encode(&self, _: &Ctx<'_>, x: BigUint, y: BigUint) -> BigUint {
         let d = x + &y;
         let d_p1 = &d + BigUint::ONE;
@@ -17,8 +17,8 @@ impl PairDencoder for DiagonalPairDencoder {
     }
 }
 
-pub struct SquarePairDencoder;
-impl PairDencoder for SquarePairDencoder {
+pub struct SquareDencoder;
+impl PairDencoder for SquareDencoder {
     fn encode(&self, _: &Ctx<'_>, x: BigUint, y: BigUint) -> BigUint {
         if x >= y {
             &x * &x + y

@@ -10,9 +10,9 @@ mod tests {
 
     use crate::{
         algorithm::{
-            list::{LinearListDencoder, TreelikeListDencoder},
-            pair::{DiagonalPairDencoder, SquarePairDencoder},
-            tree::RecursiveTreeDencoder,
+            list::{LinearDencoder, TreelikeDencoder, ZeroTermDencoder},
+            pair::{DiagonalDencoder, SquareDencoder},
+            tree::{DepthDencoder, WidthDencoder},
         },
         ctx::{Ctx, ListDencoder, PairDencoder, TreeDencoder},
         paren::Parentheses,
@@ -23,9 +23,9 @@ mod tests {
             Ctx {
                 $field: $val,
                 ..Ctx {
-                    pair: &SquarePairDencoder,
-                    list: &QueueListDencoder,
-                    tree: &RecursiveTreeDencoder,
+                    pair: &SquareDencoder,
+                    list: &TreelikeDencoder,
+                    tree: &WidthDencoder,
                 }
             }
         };
@@ -35,10 +35,33 @@ mod tests {
     #[rstest]
     fn pair_dencoders(
         #[values(
-            &DiagonalPairDencoder,
-            &SquarePairDencoder,
+            &DiagonalDencoder,
+            &SquareDencoder,
         )]
         pair_dencoder: &dyn PairDencoder,
+    ) {
+    }
+
+    #[template]
+    #[rstest]
+    fn list_dencoders(
+        #[values(
+            &LinearDencoder,
+            &ZeroTermDencoder,
+            &TreelikeDencoder,
+        )]
+        list_dencoder: &dyn ListDencoder,
+    ) {
+    }
+
+    #[template]
+    #[rstest]
+    fn tree_dencoders(
+        #[values(
+        &WidthDencoder,
+        &DepthDencoder,
+    )]
+        tree_dencoder: &dyn TreeDencoder,
     ) {
     }
 
@@ -50,17 +73,6 @@ mod tests {
             let encoded = ctx.pair.encode(&ctx, x, y);
             assert_eq!(i, encoded)
         }
-    }
-
-    #[template]
-    #[rstest]
-    fn list_dencoders(
-        #[values(
-            &LinearListDencoder,
-            &TreelikeListDencoder,
-        )]
-        list_dencoder: &dyn ListDencoder,
-    ) {
     }
 
     #[apply(list_dencoders)]
@@ -125,13 +137,9 @@ mod tests {
         assert_eq!(seq, decoded);
     }
 
-    #[template]
-    #[rstest]
-    fn tree_dencoders(#[values(&RecursiveTreeDencoder)] tree_dencoder: &dyn TreeDencoder) {}
-
     #[apply(tree_dencoders)]
     fn tree_decode_encode_up_to_100() {
-        let ctx = ctx!(tree: &RecursiveTreeDencoder);
+        let ctx = ctx!(tree: &WidthDencoder);
         for i in (0..=100).map(BigUint::new_const) {
             let decoded = ctx.tree.decode(&ctx, i.clone());
             let encoded = ctx.tree.encode(&ctx, decoded.as_slice());

@@ -27,9 +27,10 @@ pub enum ParenParsingError {
     #[error("Unmatched closing parenthesis at index {idx}.")]
     UnmatchedClosingParen { idx: usize },
 }
-impl Display for Parentheses {
+pub struct Printer<'a>(pub &'a [Paren]);
+impl Display for Printer<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for paren in self.as_slice() {
+        for &paren in self.0 {
             f.write_char(match paren {
                 Paren::Open => '(',
                 Paren::Close => ')',
@@ -38,9 +39,19 @@ impl Display for Parentheses {
         Ok(())
     }
 }
-impl Debug for Parentheses {
+impl Debug for Printer<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Display::fmt(&self, f)
+    }
+}
+impl Display for Parentheses {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&Printer(&self.0), f)
+    }
+}
+impl Debug for Parentheses {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&Printer(&self.0), f)
     }
 }
 impl TryFrom<Vec<Paren>> for Parentheses {

@@ -2,8 +2,8 @@ use crate::ctx::{Ctx, ListDencoder};
 use num_bigint::BigUint;
 use std::collections::VecDeque;
 
-pub struct LinearListDencoder;
-impl ListDencoder for LinearListDencoder {
+pub struct LinearDencoder;
+impl ListDencoder for LinearDencoder {
     fn encode(&self, ctx: &Ctx<'_>, iter: &mut dyn Iterator<Item = BigUint>) -> BigUint {
         let Some(acc) = iter.next() else {
             return BigUint::ZERO;
@@ -32,8 +32,8 @@ impl ListDencoder for LinearListDencoder {
     }
 }
 
-pub struct TreelikeListDencoder;
-impl ListDencoder for TreelikeListDencoder {
+pub struct TreelikeDencoder;
+impl ListDencoder for TreelikeDencoder {
     fn encode(&self, ctx: &Ctx<'_>, iter: &mut dyn Iterator<Item = BigUint>) -> BigUint {
         let mut numbers: VecDeque<_> = iter.collect();
         if numbers.is_empty() {
@@ -70,6 +70,34 @@ impl ListDencoder for TreelikeListDencoder {
                 numbers.push_back(x);
                 numbers.push_back(y);
             }
+        }
+        Box::new(numbers.into_iter())
+    }
+}
+
+pub struct ZeroTermDencoder;
+impl ListDencoder for ZeroTermDencoder {
+    fn encode(&self, ctx: &Ctx<'_>, iter: &mut dyn Iterator<Item = BigUint>) -> BigUint {
+        let Some(mut acc) = iter.next() else {
+            return BigUint::ZERO;
+        };
+        acc = ctx.pair.encode(ctx, acc, BigUint::ZERO);
+        iter.fold(acc, |acc, n| ctx.pair.encode(ctx, n, acc)) + BigUint::ONE
+    }
+
+    fn decode(&self, ctx: &Ctx<'_>, mut code: BigUint) -> Box<dyn Iterator<Item = BigUint>> {
+        let mut numbers = vec![];
+        if code != BigUint::ZERO {
+            code -= BigUint::ONE;
+            loop {
+                let n;
+                (n, code) = ctx.pair.decode(ctx, code);
+                numbers.push(n);
+                if code == BigUint::ZERO {
+                    break;
+                }
+            }
+            numbers.reverse();
         }
         Box::new(numbers.into_iter())
     }

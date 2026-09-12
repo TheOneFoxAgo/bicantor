@@ -1,4 +1,4 @@
-use std::iter;
+use std::{collections::VecDeque, iter};
 
 use crate::{
     ctx::{Ctx, TreeDencoder},
@@ -6,8 +6,8 @@ use crate::{
 };
 use num_bigint::BigUint;
 
-pub struct RecursiveTreeDencoder;
-impl TreeDencoder for RecursiveTreeDencoder {
+pub struct WidthDencoder;
+impl TreeDencoder for WidthDencoder {
     fn encode(&self, ctx: &Ctx<'_>, parens: &[Paren]) -> BigUint {
         fn recursion(
             ctx: &Ctx,
@@ -32,6 +32,58 @@ impl TreeDencoder for RecursiveTreeDencoder {
             }
         }
         recursion(ctx, code, &mut parens);
+        parens.try_into().unwrap()
+    }
+}
+
+pub struct DepthDencoder;
+impl TreeDencoder for DepthDencoder {
+    fn encode(&self, ctx: &Ctx<'_>, parens: &[Paren]) -> BigUint {
+        // Me and claude independently arrived into this solution.
+        // Tbh, it's even more fascinating than algorithm above.
+        // If I wasn't qualified in parser theory, I would be completely lost.
+        fn recursion(ctx: &Ctx, parens: &[Paren]) -> VecDeque<BigUint> {
+            if parens.is_empty() {
+                return VecDeque::new();
+            }
+            let mut depth = 0;
+            let mut last_group_start = 0;
+            for (i, p) in parens.iter().enumerate() {
+                match p {
+                    Paren::Open => {
+                        if depth == 0 {
+                            last_group_start = i;
+                        }
+                        depth += 1;
+                    }
+                    Paren::Close => depth -= 1,
+                }
+            }
+            let first_parens = &parens[..last_group_start];
+            let second_parens = &parens[last_group_start..];
+            let inner = &second_parens[1..second_parens.len() - 1];
+            let first = ctx
+                .list
+                .encode(ctx, &mut recursion(ctx, first_parens).into_iter());
+            let mut rest = recursion(ctx, inner);
+            rest.push_front(first);
+            rest
+        }
+        ctx.list
+            .encode(ctx, &mut recursion(ctx, parens).into_iter())
+    }
+
+    fn decode(&self, ctx: &Ctx<'_>, code: BigUint) -> Parentheses {
+        let mut parens = vec![];
+        fn recursion(ctx: &Ctx, mut iter: Box<dyn Iterator<Item = BigUint>>, buf: &mut Vec<Paren>) {
+            if let Some(num) = iter.next() {
+                recursion(ctx, ctx.list.decode(ctx, num), buf);
+                buf.push(Paren::Open);
+                recursion(ctx, iter, buf);
+                buf.push(Paren::Close);
+            }
+        }
+        recursion(ctx, ctx.list.decode(ctx, code), &mut parens);
         parens.try_into().unwrap()
     }
 }
