@@ -15,8 +15,8 @@ pub struct Args {
     pub pair: PairMode,
 
     /// list encoder operation mode.
-    /// Possible values are: "linear", "treelike".
-    /// Default is "treelike"
+    /// Possible values are: "linear", "treelike", "oddeven".
+    /// Default is "oddeven"
     #[argh(option, short = 'l', default = "ListMode::Treelike")]
     pub list: ListMode,
 
@@ -40,6 +40,7 @@ pub enum PairMode {
 pub enum ListMode {
     Linear,
     Treelike,
+    Oddeven,
 }
 
 #[derive(FromArgValue)]

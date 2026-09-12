@@ -74,3 +74,36 @@ impl ListDencoder for TreelikeDencoder {
         Box::new(numbers.into_iter())
     }
 }
+
+pub struct OddEvenDencoder;
+impl ListDencoder for OddEvenDencoder {
+    fn encode(&self, ctx: &Ctx<'_>, iter: &mut dyn Iterator<Item = BigUint>) -> BigUint {
+        let Some(mut acc) = iter.next() else {
+            return BigUint::ZERO;
+        };
+        acc <<= 1;
+        iter.fold(acc, |acc, n| {
+            (ctx.pair.encode(ctx, n, acc) << 1) + BigUint::ONE
+        }) + BigUint::ONE
+    }
+
+    fn decode(&self, ctx: &Ctx<'_>, mut code: BigUint) -> Box<dyn Iterator<Item = BigUint>> {
+        let mut numbers = vec![];
+        if code != BigUint::ZERO {
+            code -= BigUint::ONE;
+            loop {
+                let stop = !code.bit(0);
+                code >>= 1;
+                if stop {
+                    break;
+                }
+                let n;
+                (n, code) = ctx.pair.decode(ctx, code);
+                numbers.push(n);
+            }
+            numbers.push(code);
+            numbers.reverse();
+        }
+        Box::new(numbers.into_iter())
+    }
+}

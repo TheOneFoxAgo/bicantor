@@ -10,7 +10,7 @@ mod tests {
 
     use crate::{
         algorithm::{
-            list::{LinearDencoder, TreelikeDencoder},
+            list::{LinearDencoder, OddEvenDencoder, TreelikeDencoder},
             pair::{DiagonalDencoder, SquareDencoder},
             tree::{DepthDencoder, WidthDencoder},
         },
@@ -48,6 +48,7 @@ mod tests {
         #[values(
             &LinearDencoder,
             &TreelikeDencoder,
+            &OddEvenDencoder,
         )]
         list_dencoder: &dyn ListDencoder,
     ) {
